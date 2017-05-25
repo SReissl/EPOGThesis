@@ -1,0 +1,749 @@
+---
+title: "The Interaction of Monetary and Macro-prudential policies in an SFC Framework"
+author: "Severin Reissl"
+date: '`r format(Sys.time(), "%d %B %Y")`'
+output:
+  pdf_document:
+    number_sections: yes
+documentclass: report
+---
+
+```{r setup, include=FALSE, purl=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval=FALSE, tidy=TRUE, tidy.opts=list(width.cutoff=75))
+```
+
+
+This document describes the model equations, starting with the identities.
+```{r}
+# 1 Identities
+```
+For households, we first define household saving and household wealth. Additionally, we posit that Deposits $D$ act as a buffer variable. We also define disposable income $YD$ and the overall stock of mortgages $M$, which is equal to the previous period's stock plus new mortgages $M_{new}$ minus mortgage repayments $rep_m$ and defaults $M_{np}$.
+```{r}
+# Households
+sav_h=W+div_ff+iD_h-C-Tax-iM
+V_h=D_h+p_h*h+e_ff-M
+D_h=D_h(-1)+sav_h+M_new-rep_m-(e_ff-e_ff(-1))
+YD=W+div_ff+iD_h-Tax-iM
+M=M(-1)+M_new-rep_m-M_np
+```
+Similarly, we define the saving (retained earnings in a given period) of firms, their wealth, and posit that short-term loans $SL_f$ act as their buffer variable, chiefly being used to finance inventories. We also define the capital stock in nominal and real terms. Finally, `LL` is the stock of long-term loans outstanding. Note that the model assumes a constant real stock of firm equity ($e_f$) which enters into firms' net worth.
+```{r}
+#Firms
+sav_f=C+I+UC*(Inv-Inv(-1))+G-W-div_f-iLL-iSL_f
+V_f=K+UC*Inv-LL-SL_f-p_ef*e_f
+SL_f=SL_f(-1)+I-sav_f-LL_sup+rep_LL+(Inv-Inv(-1))*UC
+K=k(-1)*p(-1)-delta_k*k(-1)*p(-1)+(p-p(-1))*(k(-1)-delta_k*k(-1))+i*p
+k=k(-1)+i-delta_k*k(-1)
+LL=LL(-1)+LL_sup-rep_LL-LL_np
+```
+
+Next, we describe the identities of the three banks in our model. Each of these is modelled symmetrically in terms of its accounting identities which show their saving and their net worth. Banks take advances from the central bank only if, following interaction on the interbank market, their reserves are still below target. The ex post stock of reserves is given by the stock of reserves prior to interaction on the interbank market plus interbank advances, minus interbank loans, plus central bank advances. In addition, we define for each bank a profit variable, $Pr_{bi}$ which is used as a basis for calculating dividend payments below. We also introduce an auxiliary definition of bank net worth, $V_{bbi}$ which excludes capital gains/losses on bank bonds (our form of bank capital) and which is used to calculate the regulatory ratios defined below.
+```{r}
+#Banks
+```
+
+```{r}
+#Bank 1
+sav_b1=iM_b1+fee_b1+iLL_b1+iSL_b1+iIB_b1+r_cbd(-1)*R_b1(-1)-iD_b1-r_bb(-1)*bb_b1(-1)-r_cbl(-1)*A_b1(-1)-div_b1
+Pr_b1=iM_b1+fee_b1+iLL_b1+iSL_b1+iIB_b1+r_cbd(-1)*R_b1(-1)-iD_b1-r_bb(-1)*bb_b1(-1)-r_cbl(-1)*A_b1(-1)-M_npb1-LL_npb1
+Pr_b1e=Pr_b1e(-1)+psi*(Pr_b1(-1)-Pr_b1e(-1))
+V_b1=R_b1+LL_b1+SL_b1+M_b1ns+IBL_b1-D_b1-IBA_b1-A_b1-p_bb*bb_b1
+V_bb1=R_b1+LL_b1+SL_b1+M_b1ns+IBL_b1-D_b1-IBA_b1-A_b1
+V_bb1e=V_bb1(-1)+Pr_b1e
+A_b1=max(R_tb1-R_lb1,0)
+R_b1=R_pb1+IBA_b1-IBL_b1+A_b1
+```
+
+```{r}
+#Bank 2
+sav_b2=iM_b2+fee_b2+iLL_b2+iSL_b2+iIB_b2+r_cbd(-1)*R_b2(-1)-iD_b2-r_bb(-1)*bb_b2(-1)-r_cbl(-1)*A_b2(-1)-div_b2
+Pr_b2=iM_b2+fee_b2+iLL_b2+iSL_b2+iIB_b2+r_cbd(-1)*R_b2(-1)-iD_b2-r_bb(-1)*bb_b2(-1)-r_cbl(-1)*A_b2(-1)-M_npb2-LL_npb2
+Pr_b2e=Pr_b2e(-1)+psi*(Pr_b2(-1)-Pr_b2e(-1))
+V_b2=R_b2+LL_b2+SL_b2+M_b2ns+IBL_b2-D_b2-IBA_b2-A_b2-p_bb*bb_b2
+V_bb2=R_b2+LL_b2+SL_b2+M_b2ns+IBL_b2-D_b2-IBA_b2-A_b2
+V_bb2e=V_bb2(-1)+Pr_b2e
+A_b2=max(R_tb2-R_lb2,0)
+R_b2=R_pb2+IBA_b2-IBL_b2+A_b2
+```
+
+```{r}
+#Bank 3
+sav_b3=iM_b3+fee_b3+iLL_b3+iSL_b3+iIB_b3+r_cbd(-1)*R_b3(-1)-iD_b3-r_bb(-1)*bb_b3(-1)-r_cbl(-1)*A_b3(-1)-div_b3
+Pr_b3=iM_b3+fee_b3+iLL_b3+iSL_b3+iIB_b3+r_cbd(-1)*R_b3(-1)-iD_b3-r_bb(-1)*bb_b3(-1)-r_cbl(-1)*A_b3(-1)-M_npb3-LL_npb3
+Pr_b3e=Pr_b3e(-1)+psi*(Pr_b3(-1)-Pr_b3e(-1))
+V_b3=R_b3+LL_b3+SL_b3+M_b3ns+IBL_b3-D_b3-IBA_b3-A_b3-p_bb*bb_b3
+V_bb3=R_b3+LL_b3+SL_b3+M_b3ns+IBL_b3-D_b3-IBA_b3-A_b3
+V_bb3e=V_bb3(-1)+Pr_b3e
+A_b3=max(R_tb3-R_lb3,0)
+R_b3=R_pb3+IBA_b3-IBL_b3+A_b3
+```
+
+For the financial firms, we posit that short term loans $SL_{ff}$ act as the buffer variable on the liability side, while deposits with commercial banks act as the buffer on the asset side. We also define the stock of securitised mortgages. A constant share $s_{bi}$ of the new mortgages of each bank is securitised in every period.
+
+```{r}
+#Financial Firms
+sav_ff=div_f+iM_s+r_bb(-1)*bb(-1)+r_gb(-1)*gb_ff(-1)+iD_ff+div_b-div_ff-fee-iSL_ff
+V_ff=GB_ff+p_ef*e_f+p_bb*bb+D_ff+M_s-SL_ff-e_ff
+SL_ff=ifelse(sav_ff+(e_ff-e_ff(-1))+D_ff(-1)>=p_bb*(bb-bb(-1))+(s_b1*M_newb1+s_b2*M_newb2+s_b3*M_newb3)-rep_ms-p_gb*rep_gbff+p_gb*(gb_s-gb_rcb)-p_gb*gb_dcb+p_gb*gb_scb+SL_ff(-1),0,-(sav_ff+(e_ff-e_ff(-1))+D_ff(-1)-p_bb*(bb-bb(-1))-(s_b1*M_newb1+s_b2*M_newb2+s_b3*M_newb3)+rep_ms+p_gb*rep_gbff-p_gb*(gb_s-gb_rcb)+p_gb*gb_dcb-p_gb*gb_scb-SL_ff(-1)))
+D_ff=ifelse(sav_ff+(e_ff-e_ff(-1))+D_ff(-1)>=p_bb*(bb-bb(-1))+(s_b1*M_newb1+s_b2*M_newb2+s_b3*M_newb3)-rep_ms-p_gb*rep_gbff+p_gb*(gb_s-gb_rcb)-p_gb*gb_dcb+p_gb*gb_scb+SL_ff(-1),sav_ff+(e_ff-e_ff(-1))+D_ff(-1)-p_bb*(bb-bb(-1))-(s_b1*M_newb1+s_b2*M_newb2+s_b3*M_newb3)+rep_ms+p_gb*rep_gbff-p_gb*(gb_s-gb_rcb)+p_gb*gb_dcb-p_gb*gb_scb-SL_ff(-1),0)
+M_s=M_s(-1)+s_b1*M_newb1+s_b2*M_newb2+s_b3*M_newb3-rep_ms-M_nps
+```
+
+Next, we define the identities for the government. We define the PSBR and posit that the government issues bonds to cover this PSBR. Below, we will assume that the central bank purchases all government bonds which the government cannot sell to the private sector.
+
+```{r}
+#Government
+sav_g=Tax+PCB-G-r_gb(-1)*gb(-1)
+PSBR=G+r_gb(-1)*gb(-1)-Tax-PCB
+V_g=-GB
+```
+
+The central bank is assumed to distribute all its profits to the government so that its net worth changes only as a consequence of revaluations of government bonds (this may lead to a negative net worth for the central bank, but this is not a problem in itself). Its profits are given by the difference between its revenues (interest on bonds it holds and on advances made) and the interest paid on reserves. Moreover, we posit that the central bank provides advances on demand.
+
+```{r}
+#Central Bank
+PCB=r_gb(-1)*gb_cb(-1)+r_cbl(-1)*A(-1)-r_cbd(-1)*R(-1)
+sav_cb=r_gb(-1)*gb_cb(-1)+r_cbl(-1)*A(-1)-r_cbd(-1)*R(-1)-PCB
+V_cb=GB_cb+A-R
+A=A_b1+A_b2+A_b3
+```
+
+
+
+```{r}
+#2 Behavioural equations
+```
+Next, we move on to consider the behavioural equations of our model, starting with the households.
+
+```{r}
+#Households
+```
+Expected disposable income of households is based on adaptive expectations, as is the expected price level.
+```{r}
+YD_e=YD_e(-1)+psi*(YD(-1)-YD_e(-1))
+p_e=p_e(-1)+psi*(p(-1)-p_e(-1))
+```
+The expected change in household wealth is given by expected disposable income, minus consumption demand in real terms multiplied by the expected price level, plus expected capital gains.
+
+```{r}
+V_he=V_h(-1)+(YD_e-c_d*p_e)+CG_he
+```
+Expected capital gains in turn are given by the expected change in the price of housing, which for simplicity is taken to be equal to the change in the previous period.
+```{r}
+CG_he=(p_h(-1)-p_h(-2))*h
+```
+
+Nominal consumption is given by actual real consumption times the realised price level. Real consumption demand is given by a standard equation, but we endogenise $\alpha_1$ and $\alpha_2$ as functions of real interest rate on deposits. This is done here by first defining the real interest rate on deposits (and its expectation) and then making alpha 1 and 2 a function of this, using a sigmoidal. $r_{dav}$ is the average rate of interest on deposits and is defined below.
+
+```{r}
+c_d=alpha1*YD_e/p_e+alpha2*V_h(-1)/p_e
+rr_d=(1+r_dav)/(1+pi)-1
+alpha1=alpha1L+((alpha1U-alpha1L)/(1+exp(sigmampc1*rr_de-sigmampc2)))
+alpha2=alpha2L+((alpha2U-alpha2L)/(1+exp(sigmampc1*rr_de-sigmampc2)))
+rr_de=rr_de(-1)+psi*(rr_d(-1)-rr_de(-1))
+C=c*p
+```
+
+Households' demand for mortgages is given by households' notional demand for housing, multiplied by the maximum loan-to-value ratio. The notional demand for housing in turn depends on expected wealth, the average interest rate on mortgages and the LTV determined by regulators.
+
+```{r}
+M_dem=LTV*H_dn
+H_dn=rho0+rho1*V_he-rho2*LTV-rho3*r_mav(-1)
+r_mav=r_Mb1*(M_b1ns(-1)/M(-1))+r_Mb2*(M_b2ns(-1)/M(-1))+r_Mb3*(M_b3ns(-1)/M(-1))+r_Ms*(M_s(-1)/M(-1))
+```
+
+The equations below give the rule which households use in deciding which bank to go for to demand a mortgage. In the absence of any interest rate differentials between banks, the share of mortgage demand going to each of the three banks is determined by the parameter $\lambda_{m1}$. These shares are then adjusted according to interest differentials between the banks (see also the equation for household deposits below).
+
+```{r}
+M_demb1=(lambdam11+lambdam2*(r_Mb2-r_Mb1)+lambdam2*(r_Mb3-r_Mb1))*M_dem
+M_demb2=(lambdam12+lambdam2*(r_Mb1-r_Mb2)+lambdam2*(r_Mb3-r_Mb2))*M_dem
+M_demb3=(lambdam13+lambdam2*(r_Mb1-r_Mb3)+lambdam2*(r_Mb2-r_Mb3))*M_dem
+```
+
+Effective demand for housing depends on whether or not mortgage demand is rationed. The supply of housing is a given fraction $\eta$ of the real stock of housing multiplied by the price of housing. Finally, the price of housing is obtained by solving $H_{ef}^d=H^s$ for $p_h$. We also define a leverage ratio for households which will be needed below.
+
+```{r}
+H_def=ifelse(M_dem>M_new, M_new+(1-LTV)*H_dn, H_dn)
+H_s=eta*p_h*h
+p_h=H_def/(eta*h)
+lev_h=M/(p_h*h+D_h+e_ff)
+```
+
+The next few equations simply posit that total interest payments on mortgages and on household deposits, as well as total mortgage repayments and total mortgage defaults must always be equal to those of all three banks plus (in the case of mortgage-related payments) those of holders of securitised mortgages. All of the variabes on the right hand sides will be determined below.
+
+```{r}
+iM=iM_b1+iM_b2+iM_b3+iM_s
+iD_h=iD_hb1+iD_hb2+iD_hb3
+M_new=M_newb1+M_newb2+M_newb3
+rep_m=rep_mb1+rep_mb2+rep_mb3+rep_ms
+M_np=M_npb1+M_npb2+M_npb3+M_nps
+```
+
+Households' demand for fund shares (the price of which is fixed at 1) is determined by a standard portfolio choice equation as a share of total allocatable assets ($TAA_h$). The equation also includes a term depending on $YD_e$ reflecting the transactions demand for deposits. The stock of mortgages and the nominal value of housing are determined above, while the amount of deposits is given by identity. As such, the flow of funds for households is now fully determined. The final two equations below give the rate of return on fund shares and its expected value.
+
+```{r}
+TAA_h=D_h+e_ff
+TAA_he=TAA_he(-1)+psi*(TAA_h(-1)-TAA_he(-1))
+e_ffd=(lambdaeff10-lambdaeff11*r_dav+lambdaeff12*ror_effe)*TAA_he-lambdaeff13*YD_e
+ror_eff=div_ff/e_ff(-1)
+ror_effe=ror_effe(-1)+psi*(ror_eff(-1)-ror_effe(-1))
+```
+
+The next set of equations describes the stocks of household deposits at each bank. The overall amount of deposits is given by identity, and the resulting amount of deposits is subsequently distributed between the 3 banks by a set of portfolio-type equations based on interest rate differentials. For implementing this, we only require two parameters since it does not make sense to presume without any further assumptions that the deposits of one bank should be any more interest-sensitive than those of the others.
+
+```{r}
+D_hb1=(lambdadh11+lambdadh2*(r_db1-r_db2)+lambdadh2*(r_db1-r_db3))*D_h
+D_hb2=(lambdadh12+lambdadh2*(r_db2-r_db1)+lambdadh2*(r_db2-r_db3))*D_h
+D_hb3=(lambdadh13+lambdadh2*(r_db3-r_db1)+lambdadh2*(r_db3-r_db2))*D_h
+```
+
+Finally, for the labour market, we assume that labour supply is always equal to labour demand, i.e. that there is no labour supply constraint. The change in the real wage is determined by the gap between expected capacity utilisation and $u_{nw}$. We thus assume a separate `normal' level of capacity utilisation for purposes of wage-setting which adjusts at a slow rate to the actual level of capacity utilisation. Since changes in the real wage are the only source of inflation in the model, this can be thought of as a simple case of an endogenous NAIRU (where the u stands for utilisation rather than unemployment).
+
+```{r}
+N_s=N_d
+w=w(-1)*(1+beta1*(u_e-u_nw))
+u_nw=u_nw(-1)+psiu*(u(-1)-u_nw(-1))
+u_e=u_e(-1)+psi*(u(-1)-u_e(-1))
+```
+
+```{r}
+#Firms
+```
+
+Having completed our discussion of households, we move on to firms. Firstly, the price level is determined by a constant mark-up over expected unit cost. Furhtermore, we define the wage bill.
+
+```{r}
+p=(1+theta)*UC_e
+UC=W/y
+UC_e=UC_e(-1)+psi*(UC(-1)-UC_e(-1))
+W=w*p*N_d
+```
+
+We assume that real output $y$ is equal either to full capacity output (the real capital stock divided by the constant capital to full-capacity output ratio), representing a constraint on real output, or else to expected consumption plus capital investment plus government spending plus the change in inventories necessary to bring these back to target. This implies that government consumption and capital investment demand are satisfied instantaneously, whilst consumption demand and supply can differ, leading to a change in inventories. If actual total demand for consumption, investment and government consumption is smaller than or equal to full capacity output plus the previously accumulated inventories ($Inv_{-1}$), $c_d$ is fully satisfied. Otherwise, consumption is rationed, being then equal to whatever is left of full capacity output plus previous inventories after investment and government demand are satisfied. Furthermore, firms' output decisions give rise to labour demand equal to real output divided by the constant labour productivity.
+
+```{r}
+y=min(k(-1)/kappa, c_e+i+g+(Inv_t-Inv(-1)))
+c=ifelse(c_d+i+g<=k(-1)/kappa+Inv(-1), min(c_d, c_e+Inv_t), y-i-g+Inv(-1))
+N_d=y/alpha
+Y=y*p
+```
+
+Next, we define the nominal value of investment. Real investment demand is a function of the expected utilisation gap and the previous period's interest burden. Actual investment is equal to investment demand, unless long term loans to firms are being rationed.
+
+```{r}
+I=i*p
+i_d=gamma0+gammau*(u_e-u_n)-gammal*lev_f(-1)*r_LLav(-1)
+lev_f=(LL)/(K)
+r_LLav=r_LLb1*(LL_b1(-1)/LL(-1))+r_LLb2*(LL_b2(-1)/LL(-1))+r_LLb3*(LL_b3(-1)/LL(-1))
+i=ifelse(LL_d>LL_sup, (sav_ft+LL_sup-rep_LL)/p, i_d)
+```
+
+Firms' demand for long term loans is equal to nominal demand for investment minus targeted retained earnings (defined below) plus repayments of long-term loans. This loan demand is in turn distributed between the three banks in the familiar fashion according to interest rate differentials.
+
+```{r}
+LL_d=max(0,p*i_d-sav_ft+rep_LL)
+LL_db1=(lambdall11+lambdall2*(r_LLb1-r_LLb2)+lambdall2*(r_LLb1-r_LLb3))*LL_d
+LL_db2=(lambdall12+lambdall2*(r_LLb2-r_LLb1)+lambdall2*(r_LLb2-r_LLb3))*LL_d
+LL_db3=(lambdall13+lambdall2*(r_LLb3-r_LLb2)+lambdall2*(r_LLb3-r_LLb2))*LL_d
+```
+
+Expectations of consumption demand are determined through an adaptive process, and firms have a target inventory-to-output ratio. Actual inventories are equal to previous inventories plus the difference between output and demand.
+
+```{r}
+c_e=c_e(-1)+psi*(c(-1)-c_e(-1))
+Inv_t=gamma1*y(-1)
+Inv=Inv(-1)+y-c-i-g
+```
+
+As outlined above, the total stock of firms' short term loans is determined by identity (short term loans have a duration of 1 period by assumption). Below, it will be assumed that all demand for short term loans is satisfied by banks. The total demand for such loans from firms is distributed between the three banks in the familiar fashion. 
+
+```{r}
+SL_fdb1=(lambdaslf11+lambdaslf2*(r_SLb2-r_SLb1)+lambdaslf2*(r_SLb3-r_SLb1))*SL_f
+SL_fdb2=(lambdaslf12+lambdaslf2*(r_SLb1-r_SLb2)+lambdaslf2*(r_SLb3-r_SLb2))*SL_f
+SL_fdb3=(lambdaslf13+lambdaslf2*(r_SLb1-r_SLb3)+lambdaslf2*(r_SLb2-r_SLb3))*SL_f
+```
+
+To complete the specification of the firm sector, we define the rate of capacity utilisation. As for banks, we also specify a profit variable, $Pr_f$, which serves as a basis for calculating firm dividends and retained earnings. Firms have a target level of retained earnings in each period which is based on their larget leverage ratio. Dividends are given by the difference between profits and targeted retained earnings. Furthermore, we posit that repayments of and defaults on long term loans of all three banks have to add up to total repayments and defaults. Similarly, interest payments have to add up in this fashion. The right hand sides of these relations will be determined below.
+
+```{r}
+u=y/(k(-1)/kappa)
+Pr_f=C+I+G+UC*(Inv-Inv(-1))-W-iLL-iSL_f
+sav_ft=max(0,LL(-1)+p*i_d-lev_ft*(K(-1)+p*i_d-p(-1)*delta_k*k(-1)))
+div_f=max(0,Pr_f-sav_ft)
+rep_LL=rep_LLb1+rep_LLb2+rep_LLb3
+LL_np=LL_npb1+LL_npb2+LL_npb3
+iLL=iLL_b1+iLL_b2+iLL_b3
+iSL_f=iSL_fb1+iSL_fb2+iSL_fb3
+```
+
+```{r}
+#Banks
+```
+
+Moving on to the description of banks, we first define the interest revenues of Bank 1 on mortgages and long term loans. These are given by the product of the previous period's stock of *non-securitised* mortgages held by Bank 1 and the lagged cost rate on mortgages, which is defined below and accounts for the fact that mortgages have a maturity greater than 1 period. The same is done for Bank 1's stock of long term loans. For interest payments on short loans and deposits, we do not require a cost rate and can simply use the lag of the respective interest rate. We also define interest payments on interbank lending, and we posit that securitisation fees are a constant fraction $f$ of newly securitised mortgages.
+
+```{r}
+#Bank 1
+iM_b1=r_Mcb1(-1)*(M_b1ns(-1)-M_npb1)
+iLL_b1=r_LLcb1(-1)*(LL_b1(-1)-LL_npb1)
+iSL_fb1=r_SLb1(-1)*SL_fb1(-1)
+iSL_ffb1=r_SLb1(-1)*SL_ffb1(-1)
+iSL_b1=iSL_fb1+iSL_ffb1
+iD_hb1=r_db1(-1)*D_hb1(-1)
+iD_ffb1=r_db1(-1)*D_ffb1(-1)
+iD_b1=iD_hb1+iD_ffb1
+iIB_b1=r_IB(-1)*(IBL_b1(-1)-IBA_b1(-1))
+fee_b1=f*s_b1*M_newb1
+```
+
+Next, we define the stock of mortgages of Bank 1 and the change therein. The bank supplies mortgages equal to a proportion of mortgage demand which is determined by its capital adequacy ratio and stable funding ratio relative to their respective targets (determined by the regulator). Additionally, we assume that constant shares of outstanding mortgages are repaid in each period, while the default rate depends on both the stock of mortgages and households' leverage ratio.
+
+```{r}
+M_b1ns=M_b1ns(-1)+(1-s_b1)*M_newb1-rep_mb1-M_npb1
+M_newb1=min(xi1*M_demb1,xi2*M_demb1)
+xi1=ifelse(CARb1_e/CARt<1, CARb1_e/CARt, 1)
+xi2=ifelse(SFRb1_e/SFRt<1, SFRb1_e/SFRt, 1)
+rep_mb1=chi_mb1*M_b1ns(-1) 
+M_npb1=zeta_mb1*lev_h(-1)*M_b1ns(-1)
+```
+
+The same as the above applies to long term loans of Bank 1. Additionally, we assume that the bank satisfies all demand for short term loans from firms and financial firms.
+
+```{r}
+LL_b1=LL_b1(-1)+LL_supb1-rep_LLb1-LL_npb1
+LL_supb1=min(xi1*LL_db1,xi2*LL_db1)
+rep_LLb1=chi_LLb1*LL_b1(-1)
+LL_npb1=zeta_LLb1*lev_f(-1)*LL_b1(-1)
+SL_fb1=SL_fdb1
+SL_ffb1=SL_ffdb1
+SL_b1=SL_fdb1+SL_ffdb1
+```
+
+The next and most complicated step in specifying banks' behaviour is the modelling of the interbank market. For this, we first define a 'prior' stock of reserves for Bank 1 ($R_{pb1}$). This is determined by the bank's previous stock of reserves, its clearing position, previous borrowing and lending on the interbank market, previous advances from the central bank, and interest payments to/from other banks and to/from the central bank. Next, we define a target level of reserves ($R_{tb1}$) which is derived from the formula for the liquidity coverage ratio given below and the target LCR set by the regulator. The difference between the 'prior' stock of reserves and the target level of reserves then determines the bank's demand for or supply of reserves to the interbank market.  
+The actual amounts lent by Bank 1 ($IBL_{sb1b2}$ and $IBL_{sb1b3}$) on the interbank market (in the case in which it does in fact supply anything) are given by nested if-else conditions which cover all possible combinations of situations which might occur on the interbank market (i.e. which bank, if any, demands reserves on the market; is Bank 1 the only available supplier or not; etc.).   
+The actual amounts *borrowed* by Bank 1 on the interbank market (in the case in which it does in fact demand anything) are given by the respective supplies granted by the other two banks.   
+Following interaction on the interbank market, we end up with a 'posterior' stock of reserves for Bank 1 ($R_{lb1}$), which is given by the prior stock plus interbank advances received minus interbank loans made.
+
+```{r}
+clear_b1=(D_b1-D_b1(-1))+rep_LLb1+rep_mb1-LL_supb1-(SL_b1-SL_b1(-1))-(1-s_b1)*M_newb1+iLL_b1+iSL_b1+iM_b1-iD_b1-iBB_b1+p_bb*(bb_b1-bb_b1(-1))+fee_b1-div_b1
+R_pb1=R_b1(-1)+clear_b1+IBL_b1(-1)-IBA_b1(-1)-A_b1(-1)-r_IB(-1)*IBA_b1(-1)+r_IB(-1)*IBL_b1(-1)-r_cbl(-1)*A_b1(-1)+r_cbd(-1)*R_b1(-1)
+R_tb1=LCRt*omega4*D_b1
+R_anb1=R_pb1-R_tb1
+IBL_sb1=ifelse(R_anb1>0,R_anb1,0)
+IBA_db1=ifelse(R_anb1<0,abs(R_anb1),0)
+IBL_sb1b2=ifelse(IBA_db2>=IBL_sb1+IBL_sb3&IBL_sb3>0&IBL_sb1>0,IBL_sb1,ifelse(IBA_db2<IBL_sb1+IBL_sb3&IBL_sb1>0&IBL_sb3>0,IBA_db2*(IBL_sb1/(IBL_sb1+IBL_sb3)),ifelse(IBA_db2+IBA_db3>=IBL_sb1&IBL_sb1>0&IBA_db3>0,IBL_sb1*(IBA_db2/(IBA_db2+IBA_db3)),ifelse(IBA_db2+IBA_db3<IBL_sb1&IBL_sb1>0,IBA_db2,0))))
+IBL_sb1b3=ifelse(IBA_db3>=IBL_sb1+IBL_sb2&IBL_sb2>0&IBL_sb1>0,IBL_sb1,ifelse(IBA_db3<IBL_sb1+IBL_sb2&IBL_sb1>0&IBL_sb2>0,IBA_db3*(IBL_sb1/(IBL_sb1+IBL_sb2)),ifelse(IBA_db3+IBA_db2>=IBL_sb1&IBL_sb1>0&IBA_db2>0,IBL_sb1*(IBA_db3/(IBA_db3+IBA_db2)),ifelse(IBA_db3+IBA_db2<IBL_sb1&IBL_sb1>0,IBA_db3,0))))
+IBL_b1b2=IBL_sb1b2
+IBL_b1b3=IBL_sb1b3
+IBA_b1b2=IBL_sb2b1
+IBA_b1b3=IBL_sb3b1
+IBL_b1=IBL_b1b2+IBL_b1b3
+IBA_b1=IBA_b1b2+IBA_b1b3
+R_lb1=R_pb1+IBA_b1-IBL_b1
+```
+
+Below, it will be assumed that banks have a target level of 'book value net worth', $V_{bbi}$ based on the target capital adequacy ratio. They make their decisions on dividend payments according to an adaptive process based on this. These dividend payments along with expected profits $Pr_{bie}$ give rise to a `posterior' expected book-value net worth. On the basis of this, banks determine their target level of bank bonds and the consequent supply of bank bonds (which may be negative, representing bond buybacks). Since the price of bank bonds (which will be the same for each bank) is determined through a market-clearing condition below, we can posit that all supplied bonds are actually bought, enabling us to define the real stock of bank bonds as the previous stock plus current supply.
+
+```{r}
+div_b1t=max(0,V_bb1e-V_bb1te)
+div_b1=max(0,div_b1(-1)+psi*(div_b1t-div_b1(-1)))
+V_bb1pde=V_bb1(-1)+Pr_b1e-div_b1
+bb_b1t=max(100,bb_b1(-1)+(CARt*(omega2*LL_b1+omega3*SL_b1+omega1*M_b1ns+omega0*IBL_b1)-V_bb1pde)/p_bb)
+bb_b1te=bb_b1te(-1)+psi*(bb_b1t(-1)-bb_b1te(-1))
+bb_sb1=epsiloncarbb*(bb_b1te-bb_b1(-1))
+bb_b1=bb_b1(-1)+bb_sb1
+```
+
+All bank lending rates are given by a constant mark-up over the central bank lending rate, two terms depending on the deviation of SFR and CAR from target, respectively, and the deviation of that bank's rate from the average. In addition, we define a cost rate on long-term loans and mortgages to reflect the fact that these are multi-period loans the rates of which may not adjust instantaneously. The deposit rate is given by a constant mark-up over the central bank deposit rate, a term depending on the SFR-deviation, and a term depending on the deviation from the average deposit rate.
+
+```{r}
+r_SLb1=r_cbl+epsilonsl1+epsilonsfrsl*(SFRt-SFRb1_e)+epsiloncarsl*(CARt-CARb1_e)+epsilonr*(r_SLav(-1)-r_SLb1(-1))
+r_LLcb1=(r_LLb1(-1)*LL_b1(-1)+r_LLb1*LL_supb1)/LL_b1
+r_LLb1=r_cbl+epsilonll1+epsilonsfrll*(SFRt-SFRb1_e)+epsiloncarll*(CARt-CARb1_e)+epsilonr*(r_LLav(-1)-r_LLb1(-1))
+r_Mcb1=(r_Mb1(-1)*M_b1ns(-1)+r_Mb1*M_newb1)/M_b1ns
+r_Mb1=r_cbl+epsilonm1+epsilonsfrm*(SFRt-SFRb1_e)+epsiloncarm*(CARt-CARb1_e)+epsilonr*(r_mav(-1)-r_Mb1(-1))
+r_db1=r_cbd+epsilond1+epsilonr*(r_dav(-1)-r_db1(-1))+epsilonsfrd*(SFRt-SFRb1_e)
+D_b1=D_hb1+D_ffb1
+```
+
+The same equations which we specified for Bank 1 also exist, appropriately adjusted, for banks 2 and 3.
+
+```{r}
+#Bank 2
+iM_b2=r_Mcb2(-1)*(M_b2ns(-1)-M_npb2)
+iLL_b2=r_LLcb2(-1)*(LL_b2(-1)-LL_npb2)
+iSL_fb2=r_SLb2(-1)*SL_fb2(-1)
+iSL_ffb2=r_SLb2(-1)*SL_ffb2(-1)
+iSL_b2=iSL_fb2+iSL_ffb2
+fee_b2=f*s_b2*M_newb2
+iD_hb2=r_db2(-1)*D_hb2(-1)
+iD_ffb2=r_db2(-1)*D_ffb2(-1)
+iD_b2=iD_hb2+iD_ffb2
+iIB_b2=r_IB(-1)*(IBL_b2(-1)-IBA_b2(-1))
+M_b2ns=M_b2ns(-1)+(1-s_b2)*M_newb2-rep_mb2-M_npb2
+M_newb2=min(xi3*M_demb2,xi4*M_demb2)
+xi3=ifelse(CARb2_e/CARt<1, CARb2_e/CARt, 1)
+xi4=ifelse(SFRb2_e/SFRt<1, SFRb2_e/SFRt, 1)
+rep_mb2=chi_mb2*M_b2ns(-1)
+M_npb2=zeta_mb2*lev_h(-1)*M_b2ns(-1)
+LL_b2=LL_b2(-1)+LL_supb2-rep_LLb2-LL_npb2
+LL_supb2=min(xi3*LL_db2,xi4*LL_db2)
+rep_LLb2=chi_LLb2*LL_b2(-1)
+LL_npb2=zeta_LLb2*lev_f(-1)*LL_b2(-1)
+SL_fb2=SL_fdb2
+SL_ffb2=SL_ffdb2
+SL_b2=SL_fdb2+SL_ffdb2
+clear_b2=(D_b2-D_b2(-1))+rep_LLb2+rep_mb2-LL_supb2-(SL_b2-SL_b2(-1))-(1-s_b2)*M_newb2+iLL_b2+iSL_b2+iM_b2-iD_b2-iBB_b2+p_bb*(bb_b2-bb_b2(-1))+fee_b2-div_b2
+R_pb2=R_b2(-1)+clear_b2+IBL_b2(-1)-IBA_b2(-1)-A_b2(-1)-r_IB(-1)*IBA_b2(-1)+r_IB(-1)*IBL_b2(-1)-r_cbl(-1)*A_b2(-1)+r_cbd(-1)*R_b2(-1)
+R_tb2=LCRt*omega5*D_b2
+R_anb2=R_pb2-R_tb2
+IBL_sb2=ifelse(R_anb2>0,R_anb2,0)
+IBA_db2=ifelse(R_anb2<0,abs(R_anb2),0)
+IBL_sb2b1=ifelse(IBA_db1>=IBL_sb2+IBL_sb3&IBL_sb3>0&IBL_sb2>0,IBL_sb2,ifelse(IBA_db1<IBL_sb2+IBL_sb3&IBL_sb2>0&IBL_sb3>0,IBA_db1*(IBL_sb2/(IBL_sb2+IBL_sb3)),ifelse(IBA_db1+IBA_db3>=IBL_sb2&IBL_sb2>0&IBA_db3>0,IBL_sb2*(IBA_db1/(IBA_db1+IBA_db3)),ifelse(IBA_db1+IBA_db3<IBL_sb2&IBL_sb2>0,IBA_db1,0))))
+IBL_sb2b3=ifelse(IBA_db3>=IBL_sb2+IBL_sb1&IBL_sb1>0&IBL_sb2>0,IBL_sb2,ifelse(IBA_db3<IBL_sb2+IBL_sb1&IBL_sb2>0&IBL_sb1>0,IBA_db3*(IBL_sb2/(IBL_sb2+IBL_sb1)),ifelse(IBA_db3+IBA_db1>=IBL_sb2&IBL_sb2>0&IBA_db1>0,IBL_sb2*(IBA_db3/(IBA_db3+IBA_db1)),ifelse(IBA_db3+IBA_db1<IBL_sb2&IBL_sb2>0,IBA_db3,0))))
+IBL_b2b1=IBL_sb2b1
+IBL_b2b3=IBL_sb2b3
+IBA_b2b1=IBL_b1b2
+IBA_b2b3=IBL_b3b2
+IBL_b2=IBL_b2b1+IBL_b2b3
+IBA_b2=IBA_b2b1+IBA_b2b3
+R_lb2=R_pb2+IBA_b2-IBL_b2
+bb_sb2=epsiloncarbb*(bb_b2te-bb_b2(-1))
+bb_b2=bb_b2(-1)+bb_sb2
+r_Mcb2=(r_Mb2(-1)*M_b2ns(-1)+r_Mb2*M_newb2)/M_b2ns
+r_Mb2=r_cbl+epsilonm2+epsilonsfrm*(SFRt-SFRb2_e)+epsiloncarm*(CARt-CARb2_e)+epsilonr*(r_mav(-1)-r_Mb2(-1))
+r_LLcb2=(r_LLb2(-1)*LL_b2(-1)+r_LLb2*LL_supb2)/LL_b2
+r_LLb2=r_cbl+epsilonll2+epsilonsfrll*(SFRt-SFRb2_e)+epsiloncarll*(CARt-CARb2_e)+epsilonr*(r_LLav(-1)-r_LLb2(-1))
+r_SLb2=r_cbl+epsilonsl2+epsilonsfrsl*(SFRt-SFRb2_e)+epsiloncarsl*(CARt-CARb2_e)+epsilonr*(r_SLav(-1)-r_SLb2(-1))
+r_db2=r_cbd+epsilond2+epsilonr*(r_dav(-1)-r_db2(-1))+epsilonsfrd*(SFRt-SFRb2_e)
+D_b2=D_hb2+D_ffb2
+div_b2t=max(0,V_bb2e-V_bb2te)
+div_b2=max(0,div_b2(-1)+psi*(div_b2t-div_b2(-1)))
+V_bb2pde=V_bb2(-1)+Pr_b2e-div_b2
+bb_b2t=max(100,bb_b2(-1)+(CARt*(omega2*LL_b2+omega3*SL_b2+omega1*M_b2ns+omega0*IBL_b2)-V_bb2pde)/p_bb)
+bb_b2te=bb_b2te(-1)+psi*(bb_b2t(-1)-bb_b2te(-1))
+```
+
+```{r}
+#Bank 3
+iM_b3=r_Mcb3(-1)*(M_b3ns(-1)-M_npb3)
+iLL_b3=r_LLcb3(-1)*(LL_b3(-1)-LL_npb3)
+iSL_fb3=r_SLb3(-1)*SL_fb3(-1)
+iSL_ffb3=r_SLb3(-1)*SL_ffb3(-1)
+iSL_b3=iSL_fb3+iSL_ffb3
+fee_b3=f*s_b3*M_newb3
+iD_hb3=r_db3(-1)*D_hb3(-1)
+iD_ffb3=r_db3(-1)*D_ffb3(-1)
+iD_b3=iD_hb3+iD_ffb3
+iIB_b3=r_IB(-1)*(IBL_b3(-1)-IBA_b3(-1))
+M_b3ns=M_b3ns(-1)+(1-s_b3)*M_newb3-rep_mb3-M_npb3
+M_newb3=min(xi5*M_demb3,xi6*M_demb3)
+xi5=ifelse(CARb3_e/CARt<1, CARb3_e/CARt, 1)
+xi6=ifelse(SFRb3_e/SFRt<1, SFRb3_e/SFRt, 1)
+rep_mb3=chi_mb3*M_b3ns(-1)
+M_npb3=zeta_mb3*lev_h(-1)*M_b3ns(-1)
+LL_b3=LL_b3(-1)+LL_supb3-rep_LLb3-LL_npb3
+LL_supb3=min(xi5*LL_db3,xi6*LL_db3)
+rep_LLb3=chi_LLb3*LL_b3(-1)
+LL_npb3=zeta_LLb3*lev_f(-1)*LL_b3(-1)
+SL_fb3=SL_fdb3
+SL_ffb3=SL_ffdb3
+SL_b3=SL_fdb3+SL_ffdb3
+clear_b3=(D_b3-D_b3(-1))+rep_LLb3+rep_mb3-LL_supb3-(SL_b3-SL_b3(-1))-(1-s_b3)*M_newb3+iLL_b3+iSL_b3+iM_b3-iD_b3-iBB_b3+p_bb*(bb_b3-bb_b3(-1))+fee_b3-div_b3
+R_pb3=R_b3(-1)+clear_b3+IBL_b3(-1)-IBA_b3(-1)-A_b3(-1)-r_IB(-1)*IBA_b3(-1)+r_IB(-1)*IBL_b3(-1)-r_cbl(-1)*A_b3(-1)+r_cbd(-1)*R_b3(-1)
+R_tb3=LCRt*omega6*D_b3
+R_anb3=R_pb3-R_tb3
+IBL_sb3=ifelse(R_anb3>0,R_anb3,0)
+IBA_db3=ifelse(R_anb3<0,abs(R_anb3),0)
+IBL_sb3b1=ifelse(IBA_db1>=IBL_sb3+IBL_sb2&IBL_sb2>0&IBL_sb3>0,IBL_sb3,ifelse(IBA_db1<IBL_sb3+IBL_sb2&IBL_sb3>0&IBL_sb2>0,IBA_db1*(IBL_sb3/(IBL_sb3+IBL_sb2)),ifelse(IBA_db1+IBA_db2>=IBL_sb3&IBL_sb3>0&IBA_db2>0,IBL_sb3*(IBA_db1/(IBA_db1+IBA_db2)),ifelse(IBA_db1+IBA_db2<IBL_sb3&IBL_sb3>0,IBA_db1,0))))
+IBL_sb3b2=ifelse(IBA_db2>=IBL_sb3+IBL_sb1&IBL_sb1>0&IBL_sb3>0,IBL_sb3,ifelse(IBA_db2<IBL_sb3+IBL_sb1&IBL_sb3>0&IBL_sb1>0,IBA_db2*(IBL_sb3/(IBL_sb3+IBL_sb1)),ifelse(IBA_db2+IBA_db1>=IBL_sb3&IBL_sb3>0&IBA_db1>0,IBL_sb3*(IBA_db2/(IBA_db2+IBA_db1)),ifelse(IBA_db2+IBA_db1<IBL_sb3&IBL_sb3>0,IBA_db2,0))))
+IBL_b3b1=IBL_sb3b1
+IBL_b3b2=IBL_sb3b2
+IBA_b3b1=IBL_b1b3
+IBA_b3b2=IBL_b2b3
+IBL_b3=IBL_b3b1+IBL_b3b2
+IBA_b3=IBA_b3b1+IBA_b3b2
+R_lb3=R_pb3+IBA_b3-IBL_b3
+bb_sb3=epsiloncarbb*(bb_b3te-bb_b3(-1))
+bb_b3=bb_b3(-1)+bb_sb3
+r_Mcb3=(r_Mb3(-1)*M_b3ns(-1)+r_Mb3*M_newb3)/M_b3ns
+r_Mb3=r_cbl+epsilonm3+epsilonsfrm*(SFRt-SFRb3_e)+epsiloncarm*(CARt-CARb3_e)+epsilonr*(r_mav(-1)-r_Mb3(-1))
+r_LLcb3=(r_LLb3(-1)*LL_b3(-1)+r_LLb3*LL_supb3)/LL_b3
+r_LLb3=r_cbl+epsilonll3+epsilonsfrll*(SFRt-SFRb3_e)+epsiloncarll*(CARt-CARb3_e)+epsilonr*(r_LLav(-1)-r_LLb3(-1))
+r_SLb3=r_cbl+epsilonsl3+epsilonsfrsl*(SFRt-SFRb3_e)+epsiloncarsl*(CARt-CARb3_e)+epsilonr*(r_SLav(-1)-r_SLb3(-1))
+r_db3=r_cbd+epsilond3+epsilonr*(r_dav(-1)-r_db3(-1))+epsilonsfrd*(SFRt-SFRb3_e)
+D_b3=D_hb3+D_ffb3
+div_b3t=max(0,V_bb3e-V_bb3te)
+div_b3=max(0,div_b3(-1)+psi*(div_b3t-div_b3(-1)))
+V_bb3pde=V_bb3(-1)+Pr_b3e-div_b3
+bb_b3t=max(100,bb_b3(-1)+(CARt*(omega2*LL_b3+omega3*SL_b3+omega1*M_b3ns+omega0*IBL_b3)-V_bb3pde)/p_bb)
+bb_b3te=bb_b3te(-1)+psi*(bb_b3t(-1)-bb_b3te(-1))
+```
+
+To conclude the specification of the banking sector, we define some variables which are relevant to all banks. The price of bank bonds is given by setting the total stock of bank bonds equal to the total demand which arises from a portfolio equation of the financial firms and solving for the price. The interest rate on bank bonds is determined by a constant markup over the rate on government bonds as well as a component depending on expected changes in demand for these bonds. We also define the necessary average interest rates which have not yet been specified above.  
+The interbank rate is given by a sigmoid function for which the central bank's deposit rate is the lower asymptote and the CB lending rate is the upper asymptote. $R_t$, the overall target level of reserves, will be needed below.
+
+```{r}
+#all banks
+CAR=V_bb1/(V_bb1+V_bb2+V_bb3)*CARb1+V_bb2/(V_bb1+V_bb2+V_bb3)*CARb2+V_bb3/(V_bb1+V_bb2+V_bb3)*CARb3
+CAR_e=CAR_e(-1)+psi*(CAR(-1)-CAR_e(-1))
+LL_sup=LL_supb1+LL_supb2+LL_supb3
+r_bb=r_gb+omega12-omega13*(CAR_e-CARt)
+deltabbd=bb_d-bb_d(-1)
+deltabbd_e=deltabbd_e(-1)+psi*(deltabbd(-1)-deltabbd_e(-1))
+p_bb=((lambdaff20-lambdaff21*ror_gbe+lambdaff22*ror_bbe-lambdaff23*ror_efe-lambdaff24*r_dav)*(TAA_ffe))/bb
+r_dav=r_db1*((D_hb1(-1)+D_ffb1(-1))/(D_h(-1)+D_ff(-1)))+r_db2*((D_hb2(-1)+D_ffb2(-1))/(D_h(-1)+D_ff(-1)))+r_db3*((D_hb3(-1)+D_ffb3(-1))/(D_h(-1)+D_ff(-1)))
+r_SLav=r_SLb1*((SL_fb1(-1)+SL_ffb1(-1))/(SL_f(-1)+SL_ff(-1)))+r_SLb2*((SL_fb2(-1)+SL_ffb2(-1))/(SL_f(-1)+SL_ff(-1)))+r_SLb3*((SL_fb3(-1)+SL_ffb3(-1))/(SL_f(-1)+SL_ff(-1)))
+r_IB=r_cbd+((r_cbl-r_cbd)/(1+exp(-sigmaIB*(IBD-IBS))))
+IBS=IBL_sb1+IBL_sb2+IBL_sb3
+IBD=IBA_db1+IBA_db2+IBA_db3
+div_b=div_b1+div_b2+div_b3
+```
+
+Regarding financial firms, we begin by defining profits which are used to calculate dividend payments. Financial firms' dividends are assumed to be based on an adaptive process to make them less volatile. We also define the cost rate on securitised mortgages in line with the method used for the other cost rates above. The actual rate of interest on securitised mortgages is given by a weighted average of the mortgage rates charged by the three banks. As for non-securitised mortgages, it is assumed that a constant proportion is repaid and that defaults are a function of the household leverage ratio.
+
+```{r}
+#Financial Firms
+Pr_ff=div_f+iM_s+r_bb(-1)*bb(-1)+r_gb(-1)*gb_ff(-1)+iD_ff+div_b-fee-iSL_ff
+div_ff=max(div_ff(-1)+psi_ff*(f_ff*Pr_ff-div_ff(-1)),0)
+iD_ff=iD_ffb1+iD_ffb2+iD_ffb3
+iM_s=r_Mcs(-1)*(M_s(-1)-M_nps)
+r_Mcs=(r_Ms(-1)*M_s(-1)+r_Ms*(s_b1*M_newb1+s_b2*M_newb2+s_b3*M_newb3))/M_s
+r_Ms=(r_Mb1*M_b1ns(-1)/(M(-1)-M_s(-1))+r_Mb2*M_b2ns(-1)/(M(-1)-M_s(-1))+r_Mb3*M_b3ns(-1)/(M(-1)-M_s(-1)))
+fee=fee_b1+fee_b2+fee_b3
+iSL_ff=iSL_ffb1+iSL_ffb2+iSL_ffb3
+rep_ms=chi_ms*M_s(-1)
+M_nps=zeta_ms*lev_h(-1)*M_s(-1)
+```
+
+Financial firms' overall demand for short term loans and for deposits (both of which are given by identity) are distributed between the three banks in the familiar fashion.
+
+```{r}
+SL_ffdb1=(lambdaslff11+lambdaslff2*(r_SLb2-r_SLb1)+lambdaslff2*(r_SLb3-r_SLb1))*SL_ff
+SL_ffdb2=(lambdaslff12+lambdaslff2*(r_SLb1-r_SLb2)+lambdaslff2*(r_SLb3-r_SLb2))*SL_ff
+SL_ffdb3=(lambdaslff13+lambdaslff2*(r_SLb1-r_SLb3)+lambdaslff2*(r_SLb2-r_SLb3))*SL_ff
+D_ffb1=(lambdadff11+lambdadff2*(r_db1-r_db2)+lambdadff2*(r_db1-r_db3))*D_ff
+D_ffb2=(lambdadff12+lambdadff2*(r_db2-r_db1)+lambdadff2*(r_db2-r_db3))*D_ff
+D_ffb3=(lambdadff13+lambdadff2*(r_db3-r_db1)+lambdadff2*(r_db3-r_db2))*D_ff
+```
+
+Financial firms' demand for government bonds is given by a standard portfolio equation as a a share of (expected) total allocatable assets ($TAA_{ffe}$).
+However, financial firms' actual holdings of government bonds ($GB_{ff}$) can end up being different from this if there is demand for or supply of bonds from the central bank and/or there is a repayment of government bonds which makes the outstanding stock smaller than financial firms' desired holdings (see below). We also define the return on assets of financial firms which is needed below.
+
+```{r}
+TAA_ff=D_ff+GB_ff+p_ef*e_f+BB
+TAA_ffe=TAA_ffe(-1)+psi*(TAA_fft(-1)-TAA_ffe(-1))
+TAA_fft=AE_fft*e_ff
+roa_ff=Pr_ff/(D_ff+GB_ff+E_f+BB)
+gb_d=((lambdaff10+lambdaff11*ror_gbe-lambdaff12*ror_bbe-lambdaff13*ror_efe-lambdaff14*r_dav)*TAA_ffe)/p_gb
+GB_d=gb_d*p_gb
+gb_ff=gb_ff(-1)+(gb_s-gb_rcb)-rep_gbff-gb_dcb+gb_scb
+GB_ff=gb_ff*p_gb
+```
+
+Financial firms' demand for bank bonds is set equal to the total stock of bank bonds, giving rise to the equation for price given above. Next, we specify financial firms' demand for firm equity, and set this demand equal to the fixed supply to find the price. We also define the rates of return on firm equity, bank bonds and government bonds and their respective expected values. Finally, we posit that fund shares are supplied on demand.
+
+```{r}
+bb_d=bb
+ror_bb=iBB/BB(-1)+(p_bb-p_bb(-1))/p_bb(-1)
+ror_bbe=ror_bbe(-1)+psi*(ror_bb(-1)-ror_bbe(-1))
+ror_gb=iGB_ff/GB_ff(-1)+(p_gb-p_gb(-1))/p_gb(-1)
+ror_gbe=ror_gbe(-1)+psi*(ror_gb(-1)-ror_gbe(-1))
+ror_ef=div_f/E_f(-1)+(p_ef-p_ef(-1))/p_ef(-1)
+ror_efe=ror_efe(-1)+psi*(ror_ef(-1)-ror_efe(-1))
+bb=bb(-1)+bb_sb1+bb_sb2+bb_sb3
+e_fd=((lambdaff30-lambdaff31*ror_gbe-lambdaff32*ror_bbe+lambdaff33*ror_efe-lambdaff34*r_dav)*(TAA_ffe))/p_ef
+p_ef=((lambdaff30-lambdaff31*ror_gbe-lambdaff32*ror_bbe+lambdaff33*ror_efe-lambdaff34*r_dav)*(TAA_ffe))/e_f
+e_ff=e_ffd
+```
+
+To implement the study of macro-prudential policies, we need to define some auxiliary variables for the banking sector. First, we define the capital adequacy ratio ($CAR$) for the three banks. The numerator is given by $V_{bbi}$, our measure of `book value' net worth. The denominator is a risk-weighted sum of interbank loans, mortgages, long term loans and short term loans.   
+We also define a `stable funding ratio'. Stable funding is defined in line with Basel III as equity and weighted deposits, with the denominator being given again by a weighted measure of assets.
+Finally, we define a liquidity coverage ratio. The numerator is given by reserves, the only highly liquid asset held by banks in our model. The denominator is given by a fraction of the respective bank's deposits. This represents a departure from the definition of the LCR in Basel III since there the denominator is the amount of expected net cash outflows during a 30-day period of pressure as assessed through a stress test. Obviously, we do not have the possibility of carrying out such a test here.
+
+```{r}
+CARb1=(V_bb1)/(omega0*IBL_b1+omega1*M_b1ns+omega2*LL_b1+omega3*SL_b1)
+V_bb1t=CARt*(omega0*IBL_b1+omega1*M_b1ns+omega2*LL_b1+omega3*SL_b1)
+V_bb1te=V_bb1te(-1)+psi*(V_bb1t(-1)-V_bb1te(-1))
+CARb1_e=CARb1_e(-1)+psi*(CARb1(-1)-CARb1_e(-1))
+CARb2=(V_bb2)/(omega0*IBL_b2+omega1*M_b2ns+omega2*LL_b2+omega3*SL_b2)
+V_bb2t=CARt*(omega0*IBL_b2+omega1*M_b2ns+omega2*LL_b2+omega3*SL_b2)
+V_bb2te=V_bb2te(-1)+psi*(V_bb2t(-1)-V_bb2te(-1))
+CARb2_e=CARb2_e(-1)+psi*(CARb2(-1)-CARb2_e(-1))
+CARb3=(V_bb3)/(omega0*IBL_b3+omega1*M_b3ns+omega2*LL_b3+omega3*SL_b3)
+V_bb3t=CARt*(omega0*IBL_b3+omega1*M_b3ns+omega2*LL_b3+omega3*SL_b3)
+V_bb3te=V_bb3te(-1)+psi*(V_bb3t(-1)-V_bb3te(-1))
+CARb3_e=CARb3_e(-1)+psi*(CARb3(-1)-CARb3_e(-1))
+SFRb1=(omega10*D_hb1+omega11*D_ffb1+V_bb1)/(omega7*M_b1ns+omega8*LL_b1+omega9*SL_b1)
+SFRb1_e=SFRb1_e(-1)+psi*(SFRb1(-1)-SFRb1_e(-1))
+SFRb2=(omega10*D_hb2+omega11*D_ffb2+V_bb2)/(omega7*M_b2ns+omega8*LL_b2+omega9*SL_b2)
+SFRb2_e=SFRb2_e(-1)+psi*(SFRb2(-1)-SFRb2_e(-1))
+SFRb3=(omega10*D_hb3+omega11*D_ffb3+V_bb3)/(omega7*M_b3ns+omega8*LL_b3+omega9*SL_b3)
+SFRb3_e=SFRb3_e(-1)+psi*(SFRb3(-1)-SFRb3_e(-1))
+LCRb1=(R_b1)/(omega4*(D_b1))
+LCRb2=(R_b2)/(omega5*(D_b2))
+LCRb3=(R_b3)/(omega6*(D_b3))
+```
+
+Moving on to the government, we begin by defining tax revenue as a constant share of household revenues. Government spending contains both an autonomous component and an anticyclical one which depends on the utilisation gap. Moreover, we posit that the anticyclical component differs depending on whether the utilisation gap is positive or negative. Multiplied by the price level, real government spending gives nominal government spending.
+
+```{r}
+#Government
+Tax=tau*(W+div_ff+iD_h)
+g=ifelse(u_e>u_n,g0+mu11*(u_n-u_e),g0+mu12*(u_n-u_e))
+G=g*p
+```
+
+Next, we define the supply of government bonds, which is either zero (i.e. non-negative), or equal to the PSBR, whichever is largest. We also posit that if the government runs a surplus, this surplus is used to repay bonds. Repayments to the financial firms and the central bank are fractions of total repayments given by their respective relative holdings of bonds.
+
+
+```{r}
+gb_s=max(0,PSBR/p_gb)
+gb=gb(-1)+gb_s-rep_gbcb-rep_gbff
+rep_gb=ifelse(PSBR<0, abs(PSBR)/p_gb, 0)
+rep_gbcb=rep_gb*(gb_cb(-1)*p_gb(-1))/GB(-1)
+rep_gbff=rep_gb*GB_ff(-1)/GB(-1)
+GB=gb*p_gb
+```
+
+The interest rate on government bonds is assumed to be set by the government, via a mark-up over the central bank's lending rate which depends on the expected funding gap, i.e. the part of the PSBR that cannot be covered by bonds, as a share of gdp. The price of government bonds is a function of a rate of return on government bonds targeted by the government, which is equal to the lagged return on assets of financial firms.
+
+```{r}
+r_gb=max(r_cbl,r_cbl+mu2*gapy_e)
+gap=min(PSBR/p_gb,PSBR/p_gb-(gb_d-gb_ff(-1)))
+gapy=gap/Y
+gapy_e=gapy_e(-1)+psi*(gapy(-1)-gapy_e(-1))
+ror_gbt=roa_ff(-1)
+p_gb=ror_gbt*p_gb(-1)-r_gb(-1)+p_gb(-1)
+```
+
+For the central bank, we first define the rate of inflation. We then posit a Taylor-type interest rate rule for the deposit rate. The CB lending rate is given by a mark-up over the deposit rate, thus establishing a `corridor'. We also posit that the central bank buys up all government bonds issued by the government that are not purchased by the private sector.
+Next, we define the central bank's stock of government bonds, as well as the central bank's demand for and supply of such bonds. The central bank buys/sells bonds from/to financial firms whenever the overall amount of reserves in the banking system was smaller/larger than the amount required to fulfill the overall reserve target $R_t$ in the previous period. Note that we assume here that the central bank's stock of government bonds is permitted to become negative. We thus assume that if the central bank runs out of government bonds which are used to drain reserves, it can issue them itself. We might think of this as an example of the issuance of central bank bonds which has been practiced in some countries.
+
+```{r}
+#Central Bank
+pi=(p-p(-1))/p(-1)
+r_cbd=r0+phi/2*(u(-1)-u_n)+phi/2*(pi(-1)-pit)
+r_cbl=r_cbd+r1
+R=R_lb1+R_lb2+R_lb3+A
+gb_rcb=max(0,min(PSBR/p_gb, PSBR/p_gb-(gb_d-gb(-1))))
+gb_cb=gb_cb(-1)+gb_rcb+gb_dcb-gb_scb-rep_gbcb
+R_t=R_tb1+R_tb2+R_tb3
+R_te=R_te(-1)+psi_cb*(R_t(-1)-R_te(-1))
+R_p=R_pb1+R_pb2+R_pb3
+R_pd=R_p+gb_scb*p_gb-gb_dcb*p_gb
+R_pe=R_pe(-1)+psi_cb*(R_p(-1)-R_pe(-1))
+R_pde=R_pde(-1)+psi_cb*(R_pd(-1)-R_pde(-1))
+gb_dcb=max(iota_cb*(R_te-R_pde)/p_gb,0)
+gb_scb=max(iota_cb*(R_pde-R_te)/p_gb)
+```
+
+
+Auxiliary variables for constructing matrices and analysing output
+```{r}
+DebtY=((M_b1ns+M_b2ns+M_b3ns+SL_f+LL)/Y)
+gDebtY=(DebtY-DebtY(-1))/DebtY(-1)
+gDebt=((M_b1ns+M_b2ns+M_b3ns+SL_f+LL)-(M_b1ns(-1)+M_b2ns(-1)+M_b3ns(-1)+SL_f(-1)+LL(-1)))/(M_b1ns(-1)+M_b2ns(-1)+M_b3ns(-1)+SL_f(-1)+LL(-1))
+INV=UC*Inv
+INVacc=UC*(Inv-(Inv(-1)))
+dep=delta_k*k(-1)
+iBB=r_bb(-1)*bb(-1)
+iBB_b1=r_bb(-1)*bb_b1(-1)
+iBB_b2=r_bb(-1)*bb_b2(-1)
+iBB_b3=r_bb(-1)*bb_b3(-1)
+iGB=r_gb(-1)*gb(-1)
+iGB_cb=r_gb(-1)*gb_cb(-1)
+iGB_ff=r_gb(-1)*gb_ff(-1)
+iIBA_b1=r_IB(-1)*IBA_b1(-1)
+iIBA_b2=r_IB(-1)*IBA_b2(-1)
+iIBA_b3=r_IB(-1)*IBA_b3(-1)
+iIBL_b1=r_IB(-1)*IBL_b1(-1)
+iIBL_b2=r_IB(-1)*IBL_b2(-1)
+iIBL_b3=r_IB(-1)*IBL_b3(-1)
+iIB_netb1=iIBL_b1-iIBA_b1
+iIB_netb2=iIBL_b2-iIBA_b2
+iIB_netb3=iIBL_b3-iIBA_b3
+iCBA=r_cbl(-1)*A(-1)
+iCBD=r_cbd(-1)*R(-1)
+iCBA_b1=r_cbl(-1)*A_b1(-1)
+iCBA_b2=r_cbl(-1)*A_b2(-1)
+iCBA_b3=r_cbl(-1)*A_b3(-1)
+iCBD_b1=r_cbd(-1)*R_b1(-1)
+iCBD_b2=r_cbd(-1)*R_b2(-1)
+iCBD_b3=r_cbd(-1)*R_b3(-1)
+deltadep_h=D_h-D_h(-1)
+deltadep_ff=D_ff-D_ff(-1)
+deltadep_b1=D_b1-D_b1(-1)
+deltadep_b2=D_b2-D_b2(-1)
+deltadep_b3=D_b3-D_b3(-1)
+deltaGB=p_gb*(gb-gb(-1))
+deltaGB_ff=p_gb*(gb_ff-gb_ff(-1))
+deltaGB_cb=p_gb*(gb_cb-gb_cb(-1))
+deltaCBA=A-A(-1)
+deltaCBA_b1=A_b1-A_b1(-1)
+deltaCBA_b2=A_b2-A_b2(-1)
+deltaCBA_b3=A_b3-A_b3(-1)
+deltaR=R-R(-1)
+deltaR_b1=R_b1-R_b1(-1)
+deltaR_b2=R_b2-R_b2(-1)
+deltaR_b3=R_b3-R_b3(-1)
+deltaIBL_b1=IBL_b1-IBL_b1(-1)
+deltaIBL_b2=IBL_b2-IBL_b2(-1)
+deltaIBL_b3=IBL_b3-IBL_b3(-1)
+deltaIBA_b1=IBA_b1-IBA_b1(-1)
+deltaIBA_b2=IBA_b2-IBA_b2(-1)
+deltaIBA_b3=IBA_b3-IBA_b3(-1)
+deltaM=M_new-rep_m
+deltaM_b1=(1-s_b1)*M_newb1-rep_mb1
+deltaM_b2=(1-s_b2)*M_newb2-rep_mb2
+deltaM_b3=(1-s_b3)*M_newb3-rep_mb3
+deltaM_s=s_b1*M_newb1+s_b2*M_newb2+s_b3*M_newb3-rep_ms
+deltaLL=LL_sup-rep_LL
+deltaLL_b1=LL_supb1-rep_LLb1
+deltaLL_b2=LL_supb2-rep_LLb2
+deltaLL_b3=LL_supb3-rep_LLb3
+deltaSL_f=SL_f-SL_f(-1)
+deltaSL_ff=SL_ff-SL_ff(-1)
+deltaSL_b1=SL_b1-SL_b1(-1)
+deltaSL_b2=SL_b2-SL_b2(-1)
+deltaSL_b3=SL_b3-SL_b3(-1)
+deltae_ff=e_ff-e_ff(-1)
+BB=p_bb*bb
+BB_b1=p_bb*bb_b1
+BB_b2=p_bb*bb_b2
+BB_b3=p_bb*bb_b3
+deltaBB=p_bb*(bb-bb(-1))
+deltaBB_b1=p_bb*(bb_b1-bb_b1(-1))
+deltaBB_b2=p_bb*(bb_b2-bb_b2(-1))
+deltaBB_b3=p_bb*(bb_b3-bb_b3(-1))
+V_hlag=V_h(-1)
+V_flag=V_f(-1)
+V_b1lag=V_b1(-1)
+V_b2lag=V_b2(-1)
+V_b3lag=V_b3(-1)
+V_fflag=V_ff(-1)
+V_glag=V_g(-1)
+V_cblag=V_cb(-1)
+CG_h=(p_h-p_h(-1))*h+M_np
+CG_f=(UC-UC(-1))*Inv(-1)+(p-p(-1))*(k(-1)-delta_k*k(-1))-(p_ef-p_ef(-1))*e_f-delta_k*k(-1)*p(-1)+LL_np
+CG_b1=-(p_bb-p_bb(-1))*bb_b1(-1)-LL_npb1-M_npb1
+CG_b2=-(p_bb-p_bb(-1))*bb_b2(-1)-LL_npb2-M_npb2
+CG_b3=-(p_bb-p_bb(-1))*bb_b3(-1)-LL_npb3-M_npb3
+CG_ff=(p_gb-p_gb(-1))*gb_ff(-1)+(p_ef-p_ef(-1))*e_f+(p_bb-p_bb(-1))*bb(-1)-M_nps
+CG_g=-(p_gb-p_gb(-1))*gb(-1)
+CG_cb=(p_gb-p_gb(-1))*gb_cb(-1)
+GB_cb=p_gb*gb_cb
+E_f=p_ef*e_f
+H=p_h*h
+dTAA_ffe=TAA_ffe-TAA_ffe(-1)
+dror=ror_gbe-ror_gbe(-1)
+dpgb=p_gb-p_gb(-1)
+drgb=r_gb-r_gb(-1)
+yieldBB=iBB/BB(-1)
+CGBB=(p_bb-p_bb(-1))/p_bb(-1)
+yieldEF=div_f/E_f(-1)
+yieldEFalt=div_f/e_f
+CGEF=(p_ef-p_ef(-1))/p_ef(-1)
+yieldGB=iGB_ff/GB_ff(-1)
+CGGB=(p_gb-p_gb(-1))/p_gb(-1)
+```
